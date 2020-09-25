@@ -119,6 +119,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "iscob-ng"
+    }
+  },
+  "defaultProject": "iscob-ng",
+  "cli": {
+    "analytics": "90b652ac-26b5-4dff-802a-cc0ed09d6472"
+  }
 }
