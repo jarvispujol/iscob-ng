@@ -1,4 +1,7 @@
 <button (click)="login()">Login</button>
 <button (click)="logout()">Logout</button>
 
+<div *ngIf="logged">is Logged</div>
+<div *ngIf="admin"> is Admin</div>
+
 <router-outlet></router-outlet>

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { AuthConfig, NullValidationHandler, OAuthService } from 'angular-oauth2-oidc';
+import { LoginService } from './services/login.service';
 
 @Component({
   selector: 'app-root',
@@ -9,12 +10,15 @@ import { AuthConfig, NullValidationHandler, OAuthService } from 'angular-oauth2-
 export class AppComponent {
   title = 'iscob-ng';
 
-  constructor(private oauthService: OAuthService){
+  admin: boolean;
+  logged: boolean;
+
+  constructor(private oauthService: OAuthService, private loginService: LoginService){
 	  this.configure();
   }
 
   authConfig: AuthConfig = {
-    issuer: 'http://localhost:8080/auth/realms/iscob',
+    issuer: 'https://jpdv-sso.herokuapp.com/auth/realms/iscob',
     redirectUri: window.location.origin,
     clientId: 'iscob-frontend',
     responseType: 'code',
@@ -26,15 +30,33 @@ export class AppComponent {
 	this.oauthService.configure(this.authConfig);
 	this.oauthService.tokenValidationHandler = new NullValidationHandler();
 	this.oauthService.setupAutomaticSilentRefresh();
-	this.oauthService.loadDiscoveryDocument().then(()=> this.oauthService.tryLogin());
+	this.oauthService.loadDiscoveryDocument().then(()=> this.oauthService.tryLogin())
+	.then(() => {
+		if(this.oauthService.getIdentityClaims()){
+			this.logged = this.isLogged();
+			this.admin = this.isAdmin();
+		}
+	})
   }
 
-  login():void {
-	this.oauthService.initImplicitFlowInternal();
+  public isLogged(): boolean{
+	return (this.oauthService.hasValidIdToken() && this.oauthService.hasValidAccessToken());
   }
 
-  logout():void {
-	this.oauthService.logOut()
+  public isAdmin(): boolean{
+	const token = this.oauthService.getAccessToken();
+	const payload = token.split('.')[1];
+	const payloadDecodeJson = atob(payload);
+	const payloadDecode = JSON.parse(payloadDecodeJson);
+	console.log(payloadDecode.realm_access.roles.indexOf("realm-admin"));
+	return (payloadDecode.realm_access.roles.indexOf("realm-admin") !== -1 );
   }
 
+  public login():void{
+	  this.loginService.login();
+  }
+
+  public logout():void{
+	this.loginService.logout();
+}
 }
